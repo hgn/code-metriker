@@ -1,12 +1,12 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJ_SRC_PATH := $(notdir $(patsubst %/,%,$(dir $(MKFILE_PATH))))
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-EXEC_DIR := /usr/share/hippod
-CONF_DIR := /etc/hippod
+EXEC_DIR := /usr/share/code-metriker
+CONF_DIR := /etc/code-metriker
 
 
 help:
-	@echo "install - install distribution to /var/www/hippod and systemd unit file"
+	@echo "install - install distribution to /var/www/code-metriker and systemd unit file"
 
 all:
 	help
@@ -35,14 +35,12 @@ install:
 	else \
 		echo "create dir $(CONF_DIR)" ; \
 		mkdir -p $(CONF_DIR) ; \
-		cp $(ROOT_DIR)/assets/hippod-configuration.json $(CONF_DIR)/ ; \
+		cp $(ROOT_DIR)/conf/code-metriker.conf $(CONF_DIR)/ ; \
 	fi
 	mkdir -p $(EXEC_DIR)
 	cp -r $(ROOT_DIR)/* $(EXEC_DIR)
-	cp assets/hippod.service /lib/systemd/system/
-	chmod 644 /lib/systemd/system/hippod.service
-	mkdir -p /usr/share/hippod/data/
-	cp -r assets/pandoc-templates /usr/share/hippod/data/
+	cp conf/code-metriker.service /lib/systemd/system/
+	chmod 644 /lib/systemd/system/code-metriker.service
 	@echo "now call systemctl daemon-reload"
 	@echo ".. enable service via: systemctl enable hippod"
 	@echo ".. start service via: systemctl start hippod"

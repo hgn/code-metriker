@@ -1,0 +1,9 @@
+[Unit]
+Description=Code Metriker
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/share/code-metriker/run.py -f /etc/code-metriker/code-metriker.conf
+
+[Install]
+WantedBy=multi-user.target
