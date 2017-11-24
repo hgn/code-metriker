@@ -14,10 +14,12 @@ import matplotlib.colors as mcolors
 import numpy as np
 import os
 import pandas as pd
+import asyncio
 
 
 DPI = 90
-FIGSIZE = (12,7)
+FIGSIZE_WIDE = (12,7)
+FIGSIZE_RECT = (12,9)
 
 
 EXCLUDE_LANGUAGES = ("SUM", "header", "HTML")
@@ -72,7 +74,7 @@ class LizardWrapper(object):
         self.__plot_hexbin('nloc-ccn-hexbin.png',
                            diff_df['CCN'], diff_df['NLOC'])
 
-    def get_top100(self):
+    def top100(self):
         df = self.db[-1][:][:100]
         toplist = [{key: row[1][key]
                     for key in self.selected_headers}
@@ -80,7 +82,7 @@ class LizardWrapper(object):
         return json.dumps(toplist)
 
     def __plot_lines(self, filename, labels, ccn, nloc):
-        fig = plt.figure(figsize=FIGSIZE)
+        fig = plt.figure(figsize=FIGSIZE_WIDE)
         par1 = fig.add_subplot(211)
         par2 = fig.add_subplot(212)
         par1.plot(nloc, 'o-', color=plt.cm.viridis(0))
@@ -94,7 +96,7 @@ class LizardWrapper(object):
         fig.savefig(os.path.join(self.outdir, filename), bbox_inches='tight', dpi=DPI)
 
     def __plot_hexbin(self, filename, ccn, nloc):
-        fig = plt.figure(figsize=FIGSIZE)
+        fig = plt.figure(figsize=FIGSIZE_RECT)
         plt.hexbin(ccn, nloc,
                    gridsize=20, mincnt=1,
                    norm=mcolors.LogNorm(),
@@ -126,7 +128,7 @@ class Loc(object):
         self._graph_remain()
 
     def _graph_sum(self):
-        fig = plt.figure(figsize=FIGSIZE)
+        fig = plt.figure(figsize=FIGSIZE_WIDE)
         ax = fig.add_subplot(111)
         x = list(); y = list(); labels = list()
         for i, tag in enumerate(self.sorted_labels):
@@ -162,7 +164,7 @@ class Loc(object):
             x.append(i)
             labels.append(tag)
 
-        fig = plt.figure(figsize=FIGSIZE)
+        fig = plt.figure(figsize=FIGSIZE_WIDE)
         ax = fig.add_subplot(111)
 
         for language in all_languages:
@@ -191,11 +193,12 @@ class Loc(object):
 
 
 
-
-def clone(tmpdir, repo):
+async def git_clone(tmpdir, repo):
+    # with async_timeout.timeout(FETCH_TIMEOUT):
     cmd = "git clone {} {}".format(repo, tmpdir)
-    w = subprocess.Popen(cmd.split())
-    w.wait()
+    process = await asyncio.create_subprocess_exec(*cmd.split())
+    code = await process.wait()
+    print('Terminated with code {}'.format(code))
 
 def tags(tmpdir):
     cmd = 'git -C {} tag'.format(tmpdir)
@@ -203,31 +206,41 @@ def tags(tmpdir):
     tags = result.stdout.decode('utf-8').splitlines()
     return sorted(tags)
 
-def checkout(tmpdir, tag):
+async def git_checkout(tmpdir, tag):
     cmd = "git -C {} checkout {}".format(tmpdir, tag)
-    w = subprocess.Popen(cmd.split())
-    w.wait()
+    print(cmd)
+    process = await asyncio.create_subprocess_exec(*cmd.split())
+    await process.wait()
+    cmd = "git submodule sync"
+    print(cmd)
+    process = await asyncio.create_subprocess_exec(*cmd.split())
+    await process.wait()
+    cmd = "git submodule update --init --recursive"
+    print(cmd)
+    process = await asyncio.create_subprocess_exec(*cmd.split())
+    await process.wait()
 
-def exec_loc_grapher(tmpdir, outdir):
-    cmd = "./loc-grapher.py --git-dir {} --out-dir {}".format(tmpdir, outdir)
-    w = subprocess.Popen(cmd.split())
-    w.wait()
-
-def main():
-    git_dir = tempfile.TemporaryDirectory().name
-    clone(git_dir, REPO)
+async def worker(app):
+    # just the IO hogs are awaited
+    git_dir = os.path.join(app['TMPDIR'], "repo")
+    if os.path.isdir(git_dir):
+        shutil.rmtree(git_dir)
+        os.mkdir(git_dir)
+    await git_clone(git_dir, REPO)
     tags_sorted = tags(git_dir)
 
     loc = Loc(git_dir, ".")
     liz = LizardWrapper(git_dir, ".")
 
     for tag in tags_sorted:
-        checkout(git_dir, tag)
+        await git_checkout(git_dir, tag)
         loc.feed(tag)
         liz.feed(tag)
     loc.finalize()
     liz.finalize()
 
+    print(liz.top100())
 
-if __name__ == "__main__":
-    main()
+def main(app):
+    # create task
+    asyncio.ensure_future(worker(app))

@@ -6,7 +6,7 @@ CONF_DIR := /etc/code-metriker
 
 
 help:
-	@echo "install - install distribution to /var/www/code-metriker and systemd unit file"
+	@echo "install - install distribution to /use/share/code-metriker and systemd unit file"
 
 all:
 	help
@@ -20,7 +20,6 @@ uninstall:
 		echo "e.g. rm -rf $(CONF_DIR)" ; \
 	fi
 	@echo "uninstallation completed"
-	@echo "NOTE: runtime data was NOT deleted"
 
 install:
 	@if [ -d "$(EXEC_DIR)" ] ; \

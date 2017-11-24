@@ -9,6 +9,9 @@ import random
 import argparse
 import asyncio
 import time
+import tempfile
+
+from worker import grapher
 
 
 from aiohttp import web
@@ -31,6 +34,8 @@ def set_config_defaults(app):
 def init_aiohttp(conf):
     app = web.Application()
     app["CONF"] = conf
+    app['LOOP'] = asyncio.get_event_loop()
+    app['TMPDIR'] = tempfile.TemporaryDirectory().name
     return app
 
 
@@ -64,32 +69,25 @@ def setup_routes(app, conf):
     app.router.add_get('/', handle_index)
 
 
-def timeout_daily_midnight(app):
+def execute_timeout(app):
+    grapher.main(app)
+
+
+def timeout_executer(app):
     print("Execute daily execution handler")
     start_time = time.time()
-    # do something
+    app['LOOP'].call_soon(execute_timeout, app)
     end_time = time.time()
     print("Excuted in {:0.2f} seconds".format(end_time - start_time))
 
 
-def seconds_to_midnight():
-    now = datetime.datetime.now()
-    deltatime = datetime.timedelta(days=1)
-    tomorrow = datetime.datetime.replace(now + deltatime, hour=0, minute=0, second=0)
-    seconds = (tomorrow - now).seconds
-    if seconds < 60: return 60.0 # sanity checks
-    if seconds > 60 * 60 * 24: return 60.0 * 60 * 24
-    return seconds
-
-
 def register_timeout_handler_daily(app):
     loop = asyncio.get_event_loop()
-    midnight_sec = seconds_to_midnight()
-    call_time = loop.time() + midnight_sec
-    msg = "Register daily timeout [scheduled in {} seconds]".format(call_time)
+    call_time = loop.time() + app['CONF']['interval']
+    msg = "Register daily timeout [scheduled in {} seconds]".format(app['CONF']['interval'])
     print(msg)
     loop.call_at(call_time, register_timeout_handler_daily, app)
-    timeout_daily_midnight(app)
+    timeout_executer(app)
 
 
 def register_timeout_handler(app):
@@ -99,12 +97,8 @@ def register_timeout_handler(app):
 def setup_db(app):
     app['path-root'] = os.path.dirname(os.path.realpath(__file__))
 
-def init_debug(conf):
-    pass
-
 
 def main(conf):
-    init_debug(conf)
     app = init_aiohttp(conf)
     setup_db(app)
     setup_routes(app, conf)
@@ -131,9 +125,14 @@ def load_configuration_file(args):
     exec(open(args.configuration).read(), config)
     return config
 
+
 def configuration_check(conf):
     if not "port" in conf:
         conf['port'] = '8080'
+    if not "interval" in conf:
+        # one hour
+        conf['interval'] = 60 * 60
+
 
 def conf_init():
     args = parse_args()
@@ -147,3 +146,4 @@ if __name__ == '__main__':
     print("Starting code-metriker (python: {})".format(info_str))
     conf = conf_init()
     main(conf)
+
