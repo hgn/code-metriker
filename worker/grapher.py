@@ -26,6 +26,7 @@ EXCLUDE_LANGUAGES = ("SUM", "header", "HTML")
 
 
 REPO = "https://github.com/hgn/captcp.git"
+REPO = "https://github.com/netsniff-ng/netsniff-ng.git"
 
 
 OUTDIR = os.getcwd()
@@ -43,7 +44,7 @@ class LizardWrapper(object):
                                  'begin', 'end']
 
     def feed(self, label):
-        cmd = 'lizard --csv --modified'
+        cmd = 'lizard --csv --modified {}'.format(self.workingdir)
         result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
         csstring = result.stdout.decode('utf-8')
         df = pd.read_csv(io.StringIO(csstring), header=None, names=self.headers)
@@ -101,7 +102,7 @@ class LizardWrapper(object):
         plt.hexbin(ccn, nloc,
                    gridsize=20, mincnt=1,
                    norm=mcolors.LogNorm(),
-                   cmap='plasma')
+                   cmap='plasma_r')
         plt.colorbar()
         plt.xlabel('CCN')
         plt.ylabel('NLOC')
