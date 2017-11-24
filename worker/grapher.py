@@ -94,6 +94,7 @@ class LizardWrapper(object):
         par1.set_ylabel('NLOC')
         par2.set_ylabel('CCN')
         fig.savefig(os.path.join(self.outdir, filename), bbox_inches='tight', dpi=DPI)
+        plt.close(fig)
 
     def __plot_hexbin(self, filename, ccn, nloc):
         fig = plt.figure(figsize=FIGSIZE_RECT)
@@ -105,6 +106,7 @@ class LizardWrapper(object):
         plt.xlabel('CCN')
         plt.ylabel('NLOC')
         fig.savefig(os.path.join(self.outdir, filename), bbox_inches='tight', dpi=DPI)
+        plt.close(fig)
 
 
 
@@ -147,6 +149,7 @@ class Loc(object):
         ax.grid(color='black', linestyle=':', linewidth=.05)
         filename = os.path.join(self.outdir, "cloc-sum.png")
         fig.savefig(filename, dpi=DPI, bbox_inches='tight')
+        plt.close(fig)
 
     def _graph_remain(self):
         dpi = 300
@@ -190,6 +193,7 @@ class Loc(object):
         ax.grid(color='black', linestyle=':', linewidth=.05)
         filename = os.path.join(self.outdir, "cloc-detail.png")
         fig.savefig(filename, dpi=DPI, bbox_inches='tight')
+        plt.close(fig)
 
 
 
