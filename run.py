@@ -13,8 +13,9 @@ import tempfile
 
 from worker import grapher
 
-
 from aiohttp import web
+from string import Template
+
 
 APP_VERSION = "001"
 
@@ -30,34 +31,45 @@ def init_aiohttp(conf):
     app['LOOP'] = asyncio.get_event_loop()
     app['TMPDIR'] = tempfile.TemporaryDirectory().name
     app['APP-ROOT'] = os.path.dirname(os.path.realpath(__file__))
+    # app-data must be within assets, if not the server will not
+    # serve the data automatically
+    app['APP-DATA'] = os.path.join(app['APP-ROOT'], 'assets', 'generated')
+    if not os.path.exists(app['APP-DATA']):
+        os.makedirs(app['APP-DATA'])
     return app
 
 
-async def handle_journal(request):
-    root = request.app['path-root']
-    full = os.path.join(root, "assets/webpage/journal.html")
-    with open(full, 'r') as content_file:
-        content = str.encode(content_file.read())
-        return web.Response(body=content, content_type='text/html')
+async def handle_cloc(request):
+    return web.Response(body=request.app['PAGE-CLOC'], content_type='text/html')
 
 
-async def handle_utilization(request):
-    root = request.app['path-root']
-    full = os.path.join(root, "assets/webpage/utilization.html")
+async def handle_cc(request):
+    return web.Response(body=request.app['PAGE-CC'], content_type='text/html')
+
+
+def init_default_template(app):
+    # initilize default entry
+    app['PAGE-CLOC'] = "<html>service start sequence ...</html>"
+    app['PAGE-CC'] = app['PAGE-CLOC']
+
+    full = os.path.join(app['APP-ROOT'], "assets/templates/cc.html")
     with open(full, 'r') as content_file:
-        content = str.encode(content_file.read())
-        return web.Response(body=content, content_type='text/html')
+        app['PAGE-CC-TEMPLATE'] = Template(content_file.read())
+
+    full = os.path.join(app['APP-ROOT'], "assets/templates/cloc.html")
+    with open(full, 'r') as content_file:
+        app['PAGE-CLOC-TEMPLATE'] = Template(content_file.read())
 
 
 async def handle_index(request):
-    raise web.HTTPFound('journal')
+    raise web.HTTPFound('cloc')
 
 
 def setup_routes(app, conf):
-    app.router.add_route('GET', '/journal', handle_journal)
-    app.router.add_route('GET', '/utilization', handle_utilization)
+    app.router.add_route('GET', '/cloc', handle_cloc)
+    app.router.add_route('GET', '/cc', handle_cc)
 
-    path_assets = os.path.join(app['path-root'], "assets")
+    path_assets = os.path.join(app['APP-ROOT'], "assets")
     app.router.add_static('/assets', path_assets, show_index=False)
 
     app.router.add_get('/', handle_index)
@@ -90,6 +102,7 @@ def register_timeout_handler(app):
 
 def main(conf):
     app = init_aiohttp(conf)
+    init_default_template(app)
     setup_routes(app, conf)
     register_timeout_handler(app)
     web.run_app(app, host="localhost", port=conf['port'])
@@ -121,6 +134,11 @@ def configuration_check(conf):
     if not "interval" in conf:
         # one hour
         conf['interval'] = 60 * 60
+    if not "cc_top_list_max" in conf:
+        conf['cc_top_list_max'] = 20
+    if not "repo" in conf:
+        sys.stderr.write("No repo specieifed, fallback mode\n")
+        conf['repo'] = "https://github.com/hgn/captcp.git"
 
 
 def conf_init():

@@ -21,13 +21,12 @@ DPI = 90
 FIGSIZE_WIDE = (12,7)
 FIGSIZE_RECT = (12,9)
 
+LINEWIDTH = 4.0
+
 
 EXCLUDE_LANGUAGES = ("SUM", "header", "HTML")
 
 
-REPO = "https://github.com/hgn/captcp.git"
-REPO = "https://github.com/netsniff-ng/netsniff-ng.git"
-REPO = "https://github.com/kernelslacker/trinity.git"
 
 
 OUTDIR = os.getcwd()
@@ -81,14 +80,16 @@ class LizardWrapper(object):
         toplist = [{key: row[1][key]
                     for key in self.selected_headers}
                    for row in df.iterrows()]
-        return json.dumps(toplist)
+        return toplist
 
     def __plot_lines(self, filename, labels, ccn, nloc):
         fig = plt.figure(figsize=FIGSIZE_WIDE)
         par1 = fig.add_subplot(211)
         par2 = fig.add_subplot(212)
-        par1.plot(nloc, 'o-', color=plt.cm.viridis(0))
-        par2.plot(ccn, 'o-', color=plt.cm.viridis(.5))
+        par1.plot(nloc, color=plt.cm.viridis(0), linewidth=LINEWIDTH)
+        par1.grid(color='lightgrey', linestyle=':', linewidth=1.0)
+        par2.plot(ccn, color=plt.cm.viridis(.5), linewidth=LINEWIDTH)
+        par2.grid(color='lightgrey', linestyle=':', linewidth=1.0)
         par1.set_xticks(np.arange(len(nloc)))
         par2.set_xticks(np.arange(len(nloc)))
         par1.set_xticklabels([])
@@ -139,8 +140,7 @@ class Loc(object):
             x.append(i)
             y.append(self.db[tag]['SUM']['code'])
             labels.append(tag)
-        ax.plot(x, y, label='Sum')
-        #ax.legend(loc='upper left', frameon=False)
+        ax.plot(x, y, label='Sum', linewidth=LINEWIDTH)
         plt.xticks(x, labels, rotation='vertical')
         # Pad margins so that markers don't get clipped by the axes
         # Tweak spacing to prevent clipping of tick-labels
@@ -148,7 +148,7 @@ class Loc(object):
         fig.subplots_adjust(bottom=0.15)
         ax.set_ylabel('Lines of Code')
         ax.set_xlabel('Release')
-        ax.grid(color='black', linestyle=':', linewidth=.05)
+        ax.grid(color='lightgrey', linestyle=':', linewidth=1.0)
         filename = os.path.join(self.outdir, "cloc-sum.png")
         fig.savefig(filename, dpi=DPI, bbox_inches='tight')
         plt.close(fig)
@@ -180,19 +180,21 @@ class Loc(object):
                 else:
                     val = self.db[tag][language]['code']
                 y.append(val)
-            ax.plot(x, y, label=language)
+            ax.plot(x, y, label=language, linewidth=LINEWIDTH)
 
-        ax.legend(loc='upper left', frameon=False) #, prop={'size': 6})
+        legend = ax.legend(loc='upper left', frameon=True, prop={'size': 8})
+        legend.get_frame().set_facecolor('#FFFFFF')
+        legend.get_frame().set_linewidth(0.0)
+
         plt.xticks(x, labels, rotation='vertical')
         ax.margins(.2)
         fig.subplots_adjust(bottom=0.15)
         ax.set_ylabel('Lines of Code')
         ax.set_xlabel('Release')
-        ax.grid(color='lightgrey', linestyle=':', linewidth=.05)
+        ax.grid(color='lightgrey', linestyle=':', linewidth=1.0)
         #for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
         #        ax.get_xticklabels() + ax.get_yticklabels()):
         #    item.set_fontsize(7)
-        ax.grid(color='black', linestyle=':', linewidth=.05)
         filename = os.path.join(self.outdir, "cloc-detail.png")
         fig.savefig(filename, dpi=DPI, bbox_inches='tight')
         plt.close(fig)
@@ -226,17 +228,58 @@ async def git_checkout(tmpdir, tag):
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
 
+def sanitize_file(app, filename):
+    # get rid of full (/tmp/tmp9x9/repo) path
+    return filename[len(app['GIT-DIR']) + 1:]
+
+def cc_prepare_func_list_data(app, liz):
+    d = ""
+    for i, data in enumerate(liz.top100()):
+        data['file'] = sanitize_file(app, data['file'])
+        d += "<tr>"
+        d +=   "<td>{}</td>".format(data['CCN'])
+        d +=   "<td>{}</td>".format(data['function'])
+        d +=   "<td>{}</td>".format(data['file'])
+        d +=   "<td>{}</td>".format(data['begin'])
+        d += "</tr>"
+        if i > app['CONF']['cc_top_list_max']:
+            break
+    return d
+
+
+def cc_prepare_html(app, liz):
+    html_snippet = cc_prepare_func_list_data(app, liz)
+    return dict(TITLE='CC Title',
+                CCN_TABLE=html_snippet,
+                REPOURL=app['CONF']['repo'])
+
+def cc_generate_page(app, liz):
+    subst = cc_prepare_html(app, liz)
+    # convert to byte object
+    app['PAGE-CC'] = str.encode(app['PAGE-CC-TEMPLATE'].safe_substitute(subst))
+
+def cloc_prepare_html(app, liz):
+    return dict(REPOURL=app['CONF']['repo'],
+                CCLIMIT=app['CONF']['cc_top_list_max'])
+
+def cloc_generate_page(app, liz):
+    subst = cloc_prepare_html(app, liz)
+    # convert to byte object
+    app['PAGE-CLOC'] = str.encode(app['PAGE-CLOC-TEMPLATE'].safe_substitute(subst))
+
+
 async def worker(app):
     # just the IO hogs are awaited
-    git_dir = os.path.join(app['TMPDIR'], "repo")
+    app['GIT-DIR'] = os.path.join(app['TMPDIR'], "repo")
+    git_dir = app['GIT-DIR']
     if os.path.isdir(git_dir):
         shutil.rmtree(git_dir)
         os.mkdir(git_dir)
-    await git_clone(git_dir, REPO)
+    await git_clone(git_dir, app['CONF']['repo'])
     tags_sorted = tags(git_dir)
 
-    loc = Loc(git_dir, ".")
-    liz = LizardWrapper(git_dir, ".")
+    loc = Loc(git_dir, app['APP-DATA'])
+    liz = LizardWrapper(git_dir, app['APP-DATA'])
 
     for tag in tags_sorted:
         await git_checkout(git_dir, tag)
@@ -245,7 +288,9 @@ async def worker(app):
     loc.finalize()
     liz.finalize()
 
-    print(liz.top100())
+    cc_generate_page(app, liz)
+    cloc_generate_page(app, liz)
+
 
 def main(app):
     # create task

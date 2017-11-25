@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=2, shrink-to-fit=no">
+
+			<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+			<link rel="stylesheet" href="assets/css/bootstrap-grid.min.css">
+			<link rel="stylesheet" href="assets/css/style-gen.css">
+			<link rel="stylesheet" href="assets/css/style-utilization.css">
+			<link rel="stylesheet" href="assets/css/font-awesome.min.css">
+		<title>Code Metriker</title>
+	</head>
+	<body>
+
+
+	<nav class="navbar navbar-toggleable-sm navbar-light fixed-top" style="background-color: #f9f9f9;">
+		<button class="navbar-toggler navbar-toggler-right" type="button"
+																											data-toggle="collapse" data-target="#navbarsExampleDefault"
+																									aria-controls="navbarsExampleDefault" aria-expanded="false"
+																															 aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<a class="navbar-brand" href="#">
+			<img src="assets/images/logretta.svg" width="20" height="20" class="d-inline-block align-top" alt="">
+			Code Metriker
+		</a>
+
+		<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+			<ul class="navbar-nav mr-auto">
+				<li class="nav-item">
+					<a class="nav-link" href="cloc">Lines of Code</a>
+				</li>
+				<li class="nav-item active">
+					<a class="nav-link" href="#">Cyclomatic Complexity</a>
+				</li>
+			</ul>
+			<span class="navbar-text">
+				@repo: $REPOURL
+			</span>
+		</div>
+	</nav>
+
+	<div class="container-fluid">
+
+		<h3>Cyclomatic Complexity Analysis</h3>
+		<br />
+
+		Cyclomatic Complexity describes the code complexity. The higher the
+		number, the more confusing, unmanageable and incomprehensible the
+		source code is.
+
+		<br /><br />
+
+		<h4>Cyclomatic Complexity - Function Length Combined</h4>
+		<br />
+
+		The following picture illustrates a combined metric for the last
+		tagged source code snapshot. The X axis visualizes the Cyclomatic
+		Complexity values, while the Y axis represents the functionl length
+		(NLOC). If there are many flaws in the right corner, this indicates
+		spaghetti code with many branches. Most entries should be on the
+		left side: the functions are well encapsulated and separated. If
+		many values have high NLOC values, then there are many long
+		functions. Very bad are plots with lots of values in the upper left
+		corner: long functions with many branches.
+
+
+		<div class="text-center">
+			<img src="assets/generated/nloc-ccn-hexbin.png"
+				class="img-fluid" alt="cc hexbin">
+		</div>
+
+		<hr />
+		<br />
+		<br />
+
+		<h4>Top $CCLIMIT Worst Case Cyclomatic Complexity Functions</h4>
+		<br />
+
+
+		<table class="table table-hover table-sm">
+			<thead>
+				<tr>
+					<th>CCN</th>
+					<th>Function</th>
+					<th>Filename</th>
+					<th>Line Start</th>
+				</tr>
+			</thead>
+			<tbody>
+				$CCN_TABLE
+			</tbody>
+		</table>
+
+		<hr />
+		<br />
+		<br />
+
+
+		<h4>Mean Cyclomatic Complexity over Time</h4>
+		<br />
+
+		The following pictures illustrate Cyclomatic Complexity and Function
+		Length (NLOC) over time. If these numbers become larger, the state
+		of the source code deteriorates. If the numbers decrease, it
+		indicates an improvement.
+
+
+		<img src="assets/generated/nloc-ccn-mean.png"
+			 class="img-fluid" alt="cc hexbin">
+
+
+
+	</div> <!-- container -->
+
+	<script src="assets/js/jquery-3.1.1.slim.min.js"></script>
+	<script src="assets/js/tether.min.js"></script>
+	<script src="assets/js/bootstrap.min.js"></script>
+
+	</body>
+</html>

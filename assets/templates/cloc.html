@@ -40,11 +40,11 @@
 					<a class="nav-link" href="#">Lines of Code</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link" href="utilization">Cyclomatic Complexity</a>
+					<a class="nav-link" href="cc">Cyclomatic Complexity</a>
 				</li>
 			</ul>
 			<span class="navbar-text">
-				@server-stats: x239923
+				@repo: $REPOURL
 			</span>
 		</div>
 	</nav>
@@ -53,71 +53,38 @@
 
 		<h3>Lines of Code Analysis</h3>
 		Lines of Code gives a quantitative overview of the evolution of the source code.
+    Keep in mind that Source Code Is A Liability, Not An Asset - each
+    line exhibit a technical debt. Or in other words: more is not always
+    better.
+		<br />
+		<br />
 		<br />
 
-		<div class="row">
-			<div class="col-6">
+		<h4>Summarized Lines of Code</h4>
+
+		The following picture illustrates the code increase and decrease
+		over time. Each measuring point corresponds to a git label.
 
 
-				<div class="text-center">
-					<img src="assets/gen/cloc/cloc.png" class="img-fluid" alt="cloc image">
-				</div>
+		<div class="text-center">
+			<img src="assets/generated/cloc-sum.png" class="img-fluid" alt="cloc image">
+		</div>
+
+		<hr />
+		<br />
+		<br />
 
 
-			</div> <!-- col -->
-			<div class="col-6">
+		<h4>Programming Language Details</h4>
+
+		The following picture illustrates the identical data, additionally
+		differentiate the programming languages.
 
 
-				<table class="table table-hover table-sm">
-					<thead>
-						<tr>
-							<th>Release</th>
-							<th>Lines</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>v3.2</td>
-							<td>1000</td>
-						</tr>
-						<tr>
-							<td>v3.2</td>
-							<td>1000</td>
-						</tr>
-						<tr>
-							<td>v3.2</td>
-							<td>1000</td>
-						</tr>
-						<tr>
-							<td>v3.2</td>
-							<td>1000</td>
-						</tr>
-						<tr>
-							<td>v3.2</td>
-							<td>1000</td>
-						</tr>
-					</tbody>
-				</table>
+		<div class="text-center">
+			<img src="assets/generated/cloc-detail.png" class="img-fluid" alt="cloc image">
+		</div>
 
-
-
-			</div> <!-- col -->
-		</div> <!-- row -->
-
-		<div class="row">
-			<div class="col-6">
-
-
-				<div class="text-center">
-					<img src="assets/gen/cloc/cloc-detail.png" class="img-fluid" alt="cloc image">
-				</div>
-
-
-			</div> <!-- col -->
-			<div class="col-6">
-				Foo gives a quantitative overview of the evolution of the source code.
-			</div> <!-- col -->
-		</div> <!-- row -->
 
 
 
