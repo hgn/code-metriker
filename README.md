@@ -12,4 +12,4 @@ errors.
 ## Screenshot
 
 
-![Screenshot](https://github.com/hgn/code-metriker/raw/master/doc/screenshot-cc.png)
+![Screenshot](https://github.com/hgn/code-metriker/raw/master/docs/screenshot-cc.png)
