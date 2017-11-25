@@ -27,6 +27,7 @@ EXCLUDE_LANGUAGES = ("SUM", "header", "HTML")
 
 REPO = "https://github.com/hgn/captcp.git"
 REPO = "https://github.com/netsniff-ng/netsniff-ng.git"
+REPO = "https://github.com/kernelslacker/trinity.git"
 
 
 OUTDIR = os.getcwd()

@@ -24,18 +24,12 @@ EXIT_OK      = 0
 EXIT_FAILURE = 1
 
 
-
-def set_config_defaults(app):
-    # CAN be overwritten by config, will
-    # be checked for sanity before webserver start
-    app['MAX_REQUEST_SIZE'] = 5000000
-
-
 def init_aiohttp(conf):
     app = web.Application()
     app["CONF"] = conf
     app['LOOP'] = asyncio.get_event_loop()
     app['TMPDIR'] = tempfile.TemporaryDirectory().name
+    app['APP-ROOT'] = os.path.dirname(os.path.realpath(__file__))
     return app
 
 
@@ -94,13 +88,8 @@ def register_timeout_handler(app):
     register_timeout_handler_daily(app)
 
 
-def setup_db(app):
-    app['path-root'] = os.path.dirname(os.path.realpath(__file__))
-
-
 def main(conf):
     app = init_aiohttp(conf)
-    setup_db(app)
     setup_routes(app, conf)
     register_timeout_handler(app)
     web.run_app(app, host="localhost", port=conf['port'])
