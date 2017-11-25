@@ -238,9 +238,9 @@ def cc_prepare_func_list_data(app, liz):
         data['file'] = sanitize_file(app, data['file'])
         d += "<tr>"
         d +=   "<td>{}</td>".format(data['CCN'])
+        d +=   "<td>{}</td>".format(data['NLOC'])
         d +=   "<td>{}</td>".format(data['function'])
         d +=   "<td>{}</td>".format(data['file'])
-        d +=   "<td>{}</td>".format(data['begin'])
         d += "</tr>"
         if i > app['CONF']['cc_top_list_max']:
             break
@@ -249,8 +249,8 @@ def cc_prepare_func_list_data(app, liz):
 
 def cc_prepare_html(app, liz):
     html_snippet = cc_prepare_func_list_data(app, liz)
-    return dict(TITLE='CC Title',
-                CCN_TABLE=html_snippet,
+    return dict(CCN_TABLE=html_snippet,
+                CCLIMIT=app['CONF']['cc_top_list_max'],
                 REPOURL=app['CONF']['repo'])
 
 def cc_generate_page(app, liz):
@@ -259,8 +259,7 @@ def cc_generate_page(app, liz):
     app['PAGE-CC'] = str.encode(app['PAGE-CC-TEMPLATE'].safe_substitute(subst))
 
 def cloc_prepare_html(app, liz):
-    return dict(REPOURL=app['CONF']['repo'],
-                CCLIMIT=app['CONF']['cc_top_list_max'])
+    return dict(REPOURL=app['CONF']['repo'])
 
 def cloc_generate_page(app, liz):
     subst = cloc_prepare_html(app, liz)
