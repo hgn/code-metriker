@@ -15,6 +15,7 @@ import numpy as np
 import os
 import pandas as pd
 import asyncio
+from datetime import datetime
 
 
 DPI = 90
@@ -84,18 +85,18 @@ class LizardWrapper(object):
 
     def __plot_lines(self, filename, labels, ccn, nloc):
         fig = plt.figure(figsize=FIGSIZE_WIDE)
-        par1 = fig.add_subplot(211)
-        par2 = fig.add_subplot(212)
-        par1.plot(nloc, color=plt.cm.viridis(0), linewidth=LINEWIDTH)
-        par1.grid(color='lightgrey', linestyle=':', linewidth=1.0)
-        par2.plot(ccn, color=plt.cm.viridis(.5), linewidth=LINEWIDTH)
-        par2.grid(color='lightgrey', linestyle=':', linewidth=1.0)
-        par1.set_xticks(np.arange(len(nloc)))
-        par2.set_xticks(np.arange(len(nloc)))
-        par1.set_xticklabels([])
-        par2.set_xticklabels(labels)
-        par1.set_ylabel('NLOC')
-        par2.set_ylabel('CCN')
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+        ax2.plot(nloc, color=plt.cm.viridis(0), linewidth=LINEWIDTH)
+        ax2.grid(color='lightgrey', linestyle=':', linewidth=1.0)
+        ax1.plot(ccn, color=plt.cm.viridis(.5), linewidth=LINEWIDTH)
+        ax1.grid(color='lightgrey', linestyle=':', linewidth=1.0)
+        ax2.set_xticks(np.arange(len(nloc)))
+        ax1.set_xticks(np.arange(len(nloc)))
+        ax2.set_xticklabels([])
+        ax1.set_xticklabels(labels)
+        ax2.set_ylabel('NLOC')
+        ax1.set_ylabel('CCN')
         fig.savefig(os.path.join(self.outdir, filename), bbox_inches='tight', dpi=DPI)
         plt.close(fig)
 
@@ -155,8 +156,6 @@ class Loc(object):
 
     def _graph_remain(self):
         dpi = 300
-        #style("xkcd")
-        #plt.style.use('fivethirtyeight')
         x = list(); y = list(); labels = list()
         all_languages = dict()
         for k1, v1 in self.db.items():
@@ -192,9 +191,6 @@ class Loc(object):
         ax.set_ylabel('Lines of Code')
         ax.set_xlabel('Release')
         ax.grid(color='lightgrey', linestyle=':', linewidth=1.0)
-        #for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
-        #        ax.get_xticklabels() + ax.get_yticklabels()):
-        #    item.set_fontsize(7)
         filename = os.path.join(self.outdir, "cloc-detail.png")
         fig.savefig(filename, dpi=DPI, bbox_inches='tight')
         plt.close(fig)
@@ -247,27 +243,31 @@ def cc_prepare_func_list_data(app, liz):
     return d
 
 
-def cc_prepare_html(app, liz):
+def cc_prepare_html(app, ctx, liz):
     html_snippet = cc_prepare_func_list_data(app, liz)
-    return dict(CCN_TABLE=html_snippet,
+    status = "@repo:{}, @buildtime:{:.1f}sec".format(app['CONF']['repo'], ctx['duration'])
+    return dict(STATUS=status,
+                CCN_TABLE=html_snippet,
                 CCLIMIT=app['CONF']['cc_top_list_max'],
                 REPOURL=app['CONF']['repo'])
 
-def cc_generate_page(app, liz):
-    subst = cc_prepare_html(app, liz)
+def cc_generate_page(app, ctx, liz):
+    subst = cc_prepare_html(app, ctx, liz)
     # convert to byte object
     app['PAGE-CC'] = str.encode(app['PAGE-CC-TEMPLATE'].safe_substitute(subst))
 
-def cloc_prepare_html(app, liz):
-    return dict(REPOURL=app['CONF']['repo'])
+def cloc_prepare_html(app, ctx, liz):
+    status = "@repo:{}, @buildtime:{:.1f}sec".format(app['CONF']['repo'], ctx['duration'])
+    return dict(STATUS=status)
 
-def cloc_generate_page(app, liz):
-    subst = cloc_prepare_html(app, liz)
+def cloc_generate_page(app, ctx, liz):
+    subst = cloc_prepare_html(app, ctx, liz)
     # convert to byte object
     app['PAGE-CLOC'] = str.encode(app['PAGE-CLOC-TEMPLATE'].safe_substitute(subst))
 
 
 async def worker(app):
+    t1 = datetime.now()
     # just the IO hogs are awaited
     app['GIT-DIR'] = os.path.join(app['TMPDIR'], "repo")
     git_dir = app['GIT-DIR']
@@ -287,8 +287,12 @@ async def worker(app):
     loc.finalize()
     liz.finalize()
 
-    cc_generate_page(app, liz)
-    cloc_generate_page(app, liz)
+    ctx = dict()
+    duration = (datetime.now() - t1).total_seconds()
+    ctx['duration'] = duration
+
+    cc_generate_page(app, ctx, liz)
+    cloc_generate_page(app, ctx, liz)
 
 
 def main(app):
