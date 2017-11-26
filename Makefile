@@ -41,13 +41,13 @@ install:
 	cp conf/code-metriker.service /lib/systemd/system/
 	chmod 644 /lib/systemd/system/code-metriker.service
 	@echo "now call systemctl daemon-reload"
-	@echo ".. enable service via: systemctl enable hippod"
-	@echo ".. start service via: systemctl start hippod"
-	@echo ".. status via: systemctl status hippod"
-	@echo ".. logging via: journalctl -u hippod"
+	@echo ".. enable service via: systemctl enable code-metriker"
+	@echo ".. start service via: systemctl start code-metriker"
+	@echo ".. status via: systemctl status code-metriker"
+	@echo ".. logging via: journalctl -u code-metriker"
 	@echo ""
 	@echo "Don't forget to install required python modules (for root): \"sudo -H pip3 install -r requirements.txt\""
-	@echo "and \"sudo apt-get install python3-pip libsasl2-dev pandoc texlive-xetex texlive-latex-extra texlive-latex-recommended libldap-dev\""
+	@echo "and \"sudo apt-get install python3-pip\""
 
 ctags:
 	ctags -R .

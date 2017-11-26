@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 
 import os
+import io
 import sys
 import tempfile
 import shutil
 import subprocess
 import json
-import matplotlib
-import matplotlib.pyplot as plt
 import argparse
-import io
-import matplotlib.colors as mcolors
 import numpy as np
-import os
 import pandas as pd
 import asyncio
 from datetime import datetime
+
+import matplotlib
+# force matplotlib not to use x window system,
+# must be before any other matplotlib import
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
 
 
 DPI = 90
@@ -215,11 +220,11 @@ async def git_checkout(tmpdir, tag):
     print(cmd)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
-    cmd = "git submodule sync"
+    cmd = "git -C {} submodule sync".format(tmpdir)
     print(cmd)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
-    cmd = "git submodule update --init --recursive"
+    cmd = "git -C {} submodule update --init --recursive".format(tmpdir)
     print(cmd)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
