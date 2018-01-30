@@ -129,7 +129,7 @@ class Loc(object):
 
     def feed(self, label):
         self.sorted_labels.append(label)
-        cmd = 'cloc --json {}'.format(self.directory)
+        cmd = 'cloc --exclude-lang=\"XML\" --json {}'.format(self.directory)
         result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
         cloc = result.stdout.decode('utf-8')
         self.db[label] = json.loads(cloc)
