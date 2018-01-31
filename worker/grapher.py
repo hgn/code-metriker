@@ -129,8 +129,8 @@ class Loc(object):
 
     def feed(self, label):
         self.sorted_labels.append(label)
-        cmd = 'cloc --exclude-lang=\"XML\" --json {}'.format(self.directory)
-        result = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
+        cmd = 'cloc --exclude-lang=XML,XSLT --json {}'.format(self.directory)
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
         cloc = result.stdout.decode('utf-8')
         self.db[label] = json.loads(cloc)
 
@@ -185,6 +185,7 @@ class Loc(object):
                     val = self.db[tag][language]['code']
                 y.append(val)
             ax.plot(x, y, label=language, linewidth=LINEWIDTH)
+            # ax.set_yscale('log')
 
         legend = ax.legend(loc='upper left', frameon=True, prop={'size': 8})
         legend.get_frame().set_facecolor('#FFFFFF')
@@ -216,7 +217,7 @@ def tags(tmpdir):
     return sorted(tags)
 
 async def git_checkout(tmpdir, tag):
-    cmd = "git -C {} checkout {}".format(tmpdir, tag)
+    cmd = "git -C {} checkout --force {}".format(tmpdir, tag)
     print(cmd)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
@@ -285,7 +286,9 @@ async def worker(app):
     loc = Loc(git_dir, app['APP-DATA'])
     liz = LizardWrapper(git_dir, app['APP-DATA'])
 
+    print('generate statistics')
     for tag in tags_sorted:
+        print('tag: {}'.format(tag))
         await git_checkout(git_dir, tag)
         loc.feed(tag)
         liz.feed(tag)
