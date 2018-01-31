@@ -204,7 +204,7 @@ class Loc(object):
 
 async def git_clone(tmpdir, repo):
     # with async_timeout.timeout(FETCH_TIMEOUT):
-    cmd = "git clone {} {}".format(repo, tmpdir)
+    cmd = "git -c http.sslVerify=false clone {} {}".format(repo, tmpdir)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     code = await process.wait()
     print('Terminated with code {}'.format(code))
@@ -220,11 +220,11 @@ async def git_checkout(tmpdir, tag):
     print(cmd)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
-    cmd = "git -C {} submodule sync".format(tmpdir)
+    cmd = "git -c http.sslVerify=false -C {} submodule sync".format(tmpdir)
     print(cmd)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
-    cmd = "git -C {} submodule update --init --recursive".format(tmpdir)
+    cmd = "git -c http.sslVerify=false -C {} submodule update --init --recursive".format(tmpdir)
     print(cmd)
     process = await asyncio.create_subprocess_exec(*cmd.split())
     await process.wait()
